@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	gtk_widget_show(window);
 
 	g_signal_connect(window, "delete-event",
-	                 G_CALLBACK( delete_event), NULL);
+	                 G_CALLBACK(delete_event), NULL);
 	gtk_main();
 	return EXIT_SUCCESS;
 }
