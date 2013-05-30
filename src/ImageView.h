@@ -15,35 +15,30 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef ImageView_h
+#define ImageView_h
+
 #include <string>
-#include <cstdlib>
 #include <gtk/gtk.h>
-#include "Controller.h"
 
 using namespace std;
 
-static gboolean
-delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) 
-{
-	gtk_main_quit();
-	return TRUE;
-}
+class ImageView {
+public:
+	ImageView(void);
+	virtual ~ImageView();
+	GtkWidget *get_widget(void);
+	void set_file(const string &path);
+private:
+	GtkWidget *m_widget;
+	size_t m_area_width, m_area_height;
+	
+	void connect_signals(void);
 
-int main(int argc, char *argv[])
-{
-	gtk_init(&argc, &argv);
+	static gboolean
+	_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data);
+	static gboolean
+	_configure_event(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+};
 
-	// make a window
-	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	g_signal_connect(window, "delete-event",
-	                 G_CALLBACK(delete_event), NULL);
-
-	Controller controller;
-	GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), controller.get_widget(),
-	                   TRUE, TRUE, 0);
-	gtk_container_add(GTK_CONTAINER(window), hbox);
-	gtk_widget_show_all(window);
-	gtk_main();
-	return EXIT_SUCCESS;
-}
+#endif // ImageView_h
