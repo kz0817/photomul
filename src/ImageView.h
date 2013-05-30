@@ -28,15 +28,20 @@ public:
 	ImageView(void);
 	virtual ~ImageView();
 	GtkWidget *get_widget(void);
-	void set_file(const string &path);
+	void set_cairo_surface(cairo_surface_t *surface);
 private:
 	GtkWidget *m_widget;
+	cairo_surface_t *m_surface;
 	size_t m_area_width, m_area_height;
+	size_t m_surf_width, m_surf_height;
+	float m_area_aspect_ratio, m_surf_aspect_ratio;;
 	
 	void connect_signals(void);
 
 	static gboolean
 	_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data);
+	gboolean draw(GtkWidget *widget, cairo_t *cr);
+
 	static gboolean
 	_configure_event(GtkWidget *widget, GdkEvent *event, gpointer user_data);
 };

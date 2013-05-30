@@ -18,7 +18,11 @@
 #ifndef Controller_h
 #define Controller_h
 
+#include <string>
 #include <gtk/gtk.h>
+#include "ImageView.h"
+
+using namespace std;
 
 class Controller
 {
@@ -26,9 +30,11 @@ public:
 	Controller(void);
 	virtual ~Controller();
 	GtkWidget *get_widget(void);
+	void set_path(const string &path);
 
 private:
 	GtkWidget *m_widget;
+	ImageView  m_image_view;
 
 	void connect_signals(void);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,

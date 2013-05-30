@@ -22,8 +22,13 @@
 // ----------------------------------------------------------------------------
 ImageView::ImageView(void)
 : m_widget(NULL),
+  m_surface(NULL),
   m_area_width(0),
-  m_area_height(0)
+  m_area_height(0),
+  m_surf_width(0),
+  m_surf_height(0),
+  m_area_aspect_ratio(1.0),
+  m_surf_aspect_ratio(1.0)
 {
 }
 
@@ -40,8 +45,12 @@ GtkWidget *ImageView::get_widget(void)
 	return m_widget;
 }
 
-void ImageView::set_file(const string &path)
+void ImageView::set_cairo_surface(cairo_surface_t *surface)
 {
+	m_surface = surface;
+	m_surf_width = cairo_image_surface_get_width(surface);
+	m_surf_height = cairo_image_surface_get_height(surface);
+	m_surf_aspect_ratio = (float)m_surf_width / m_surf_height;
 }
 
 // ----------------------------------------------------------------------------
@@ -58,10 +67,40 @@ void ImageView::connect_signals(void)
 gboolean ImageView::_draw(GtkWidget *widget, cairo_t *cr,
                           gpointer user_data)
 {
-	cairo_move_to(cr, 0, 0);
-	cairo_line_to(cr, 100, 100);
-	cairo_stroke(cr);
+	ImageView *obj = static_cast<ImageView *>(user_data);
+	return obj->draw(widget, cr);
+}
+
+gboolean ImageView::draw(GtkWidget *widget, cairo_t *cr)
+{
 	g_debug("DRAW");
+	if (!m_surface)
+		g_debug("surface: NULL");
+
+	// draw block for all region
+	cairo_set_source_rgb(cr, 0, 0, 0);
+	cairo_rectangle(cr, 0, 0, m_area_width, m_area_width);
+	cairo_fill(cr);
+	
+	// draw the surface at center
+	float x_scale = 1.0;
+	float y_scale = 1.0;
+	float x_offset = 0;
+	float y_offset = 0;
+	if (m_area_aspect_ratio >= m_surf_aspect_ratio) {
+		y_scale = (float)m_area_height / m_surf_height;
+		x_scale = y_scale;
+		x_offset = (m_area_width - m_surf_width * x_scale) / 2;
+	} else {
+		x_scale = (float)m_area_width / m_surf_width;
+		y_scale = x_scale;
+		y_offset = (m_area_height - m_surf_height  * y_scale) / 2;
+	}
+	cairo_scale(cr, x_scale, y_scale);
+	cairo_set_source_surface(cr, m_surface,
+	                         x_offset / x_scale, y_offset / y_scale);
+	cairo_paint(cr);
+
 	return TRUE;
 }
 
@@ -72,6 +111,8 @@ gboolean ImageView::_configure_event(GtkWidget *widget, GdkEvent *event,
 	GdkEventConfigure *configureEvt = (GdkEventConfigure *)event;
 	obj->m_area_width = configureEvt->width;
 	obj->m_area_height = configureEvt->height;
+	obj->m_area_aspect_ratio =
+	  (float)obj->m_area_width / obj->m_area_height;
 	g_debug("Configure Event: %zdx%zd",
 	        obj->m_area_width, obj->m_area_height);
 	return TRUE;

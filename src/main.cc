@@ -33,12 +33,19 @@ int main(int argc, char *argv[])
 {
 	gtk_init(&argc, &argv);
 
+	// parse argument
+	string path;
+	for (int i = 1; i < argc; i++)
+		path = argv[i];
+
 	// make a window
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	g_signal_connect(window, "delete-event",
 	                 G_CALLBACK(delete_event), NULL);
 
 	Controller controller;
+	if (!path.empty())
+		controller.set_path(path);
 	GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), controller.get_widget(),
 	                   TRUE, TRUE, 0);
