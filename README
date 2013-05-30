@@ -13,3 +13,9 @@ i           : show/hide picture information
 f           : go full screen mode
 DEL         : move the picture to trash box
 1           : show dot-by-dot
+
+=============================================================================
+Tips
+=============================================================================
+The following environment variable shows the debug messages.
+G_MESSAGES_DEBUG=all ./photomul
