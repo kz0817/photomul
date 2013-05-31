@@ -42,12 +42,11 @@ struct PictureInfo {
 	string      path;
 	Orientation orientation;
 	GdkPixbuf  *pixbuf;
+	cairo_surface_t *surface;
 
-	PictureInfo(void)
-	: orientation(ORIENTATION_UNKNOWN),
-	  pixbuf(NULL)
-	{
-	}
+	// methods
+	PictureInfo(void);
+	virtual ~PictureInfo();
 };
 
 class Controller

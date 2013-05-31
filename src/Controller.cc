@@ -21,6 +21,24 @@
 #include "Controller.h"
 
 // ----------------------------------------------------------------------------
+// PictureInfo
+// ----------------------------------------------------------------------------
+PictureInfo::PictureInfo(void)
+: orientation(ORIENTATION_UNKNOWN),
+  pixbuf(NULL),
+  surface(NULL)
+{
+}
+
+PictureInfo::~PictureInfo()
+{
+	if (pixbuf)
+		g_object_unref(pixbuf);
+	if (surface)
+		cairo_surface_destroy(surface);
+}
+
+// ----------------------------------------------------------------------------
 // Public methods
 // ----------------------------------------------------------------------------
 Controller::Controller(void)
@@ -99,6 +117,7 @@ void Controller::set_path(const string &path)
 		}
 	}
 
+	picture_info->surface = surf;
 	m_image_view.set_cairo_surface(surf);
 }
 
