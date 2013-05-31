@@ -39,10 +39,13 @@ enum Orientation
 };
 
 struct PictureInfo {
+	string      path;
 	Orientation orientation;
+	GdkPixbuf  *pixbuf;
 
 	PictureInfo(void)
-	: orientation(ORIENTATION_UNKNOWN)
+	: orientation(ORIENTATION_UNKNOWN),
+	  pixbuf(NULL)
 	{
 	}
 };
@@ -61,6 +64,7 @@ private:
 
 	int get_integer(ExifEntry *exif_entry);
 	void parse_exif(const string &path, PictureInfo *picture_info);
+	void rotate_picture_if_needed(PictureInfo *picture_info);
 	void connect_signals(void);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);

@@ -46,28 +46,35 @@ GtkWidget *Controller::get_widget(void)
 void Controller::set_path(const string &path)
 {
 	PictureInfo *picture_info = new PictureInfo();
+	picture_info->path = path;
 
 	// exif
 	parse_exif(path, picture_info);
-	printf("orientation: %d\n", picture_info->orientation);
+	g_message("%s: orientation: %d", path.c_str(),
+	          picture_info->orientation);
 
 	// make pixbuf
 	GError *error = NULL;
-	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path.c_str(), &error);
-	if (!pixbuf) {
-		g_warning("Failed to open file: %s: %s\n",
+	picture_info->pixbuf = gdk_pixbuf_new_from_file(path.c_str(), &error);
+	if (!picture_info->pixbuf) {
+		g_warning("Failed to open file: %s: %s",
 		          path.c_str(), error->message);
 		g_error_free(error);
 		return;
 	}
-	size_t n_channels = gdk_pixbuf_get_n_channels(pixbuf);
+
+	// rotation if needed
+	rotate_picture_if_needed(picture_info);
+
+	// make cairo surface
+	size_t n_channels = gdk_pixbuf_get_n_channels(picture_info->pixbuf);
 	if (n_channels != 3) {
 		g_warning(
 		  "color channel is %zd: %s", n_channels, path.c_str());
 		return;
 	}
-	size_t src_width = gdk_pixbuf_get_width(pixbuf);
-	size_t src_height = gdk_pixbuf_get_height(pixbuf);
+	size_t src_width = gdk_pixbuf_get_width(picture_info->pixbuf);
+	size_t src_height = gdk_pixbuf_get_height(picture_info->pixbuf);
 	cairo_surface_t *surf = cairo_image_surface_create(
 	                          CAIRO_FORMAT_RGB24,
 	                          src_width, src_height);
@@ -80,7 +87,7 @@ void Controller::set_path(const string &path)
 	}
 
 	// convert data
-	uint8_t *src = gdk_pixbuf_get_pixels(pixbuf);
+	uint8_t *src = gdk_pixbuf_get_pixels(picture_info->pixbuf);
 	uint8_t *buf = cairo_image_surface_get_data(surf);
 	for (size_t y = 0; y < src_height;  y++) {
 		for (size_t x = 0; x < src_width; x++) {
@@ -108,6 +115,42 @@ int Controller::get_integer(ExifEntry *exif_entry)
 	return data;
 }
 
+void Controller::rotate_picture_if_needed(PictureInfo *picture_info)
+{
+	GdkPixbuf *pixbuf = NULL;
+	switch (picture_info->orientation) {
+	case ORIENTATION_UNKNOWN:
+	case ORIENTATION_NORMAL:
+		return;
+	case ORIENTATION_MIRROR_H:
+	case ORIENTATION_ROT_180:
+	case ORIENTATION_MIRROR_V:
+	case ORIENTATION_MIRROR_H_ROT_270:
+	case ORIENTATION_ROT_90:
+	case ORIENTATION_MIRROR_H_ROT_90:
+		g_warning("Not implemented: rotation %d",
+		          picture_info->orientation);
+		return;
+	case ORIENTATION_ROT_270: {
+		GdkPixbuf *src = picture_info->pixbuf;
+		pixbuf = gdk_pixbuf_rotate_simple
+		           (src, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
+		break;
+	}
+	default:
+		g_warning("Unknown rotation %d",
+		          picture_info->orientation);
+		return;
+	}
+
+	if (!pixbuf) {
+		g_warning("Failed to rotate");
+		return;
+	}
+	g_object_unref(picture_info->pixbuf);
+	picture_info->pixbuf = pixbuf;
+}
+
 void Controller::parse_exif(const string &path, PictureInfo *picture_info)
 {
 	ExifEntry *exif_entry;
@@ -115,7 +158,7 @@ void Controller::parse_exif(const string &path, PictureInfo *picture_info)
 	// open
 	ExifData *exif_data = exif_data_new_from_file(path.c_str());
 	if (!exif_data) {
-		g_warning("Failed to parse exif: %s\n", path.c_str());
+		g_warning("Failed to parse exif: %s", path.c_str());
 		return;
 	}
 
