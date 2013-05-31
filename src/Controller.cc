@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <stdint.h>
+#include <libexif/exif-data.h>
 #include "Controller.h"
 
 // ----------------------------------------------------------------------------
@@ -44,6 +45,13 @@ GtkWidget *Controller::get_widget(void)
 
 void Controller::set_path(const string &path)
 {
+	PictureInfo *picture_info = new PictureInfo();
+
+	// exif
+	parse_exif(path, picture_info);
+	printf("orientation: %d\n", picture_info->orientation);
+
+	// make pixbuf
 	GError *error = NULL;
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(path.c_str(), &error);
 	if (!pixbuf) {
@@ -90,6 +98,43 @@ void Controller::set_path(const string &path)
 // ----------------------------------------------------------------------------
 // Private methods
 // ----------------------------------------------------------------------------
+int Controller::get_integer(ExifEntry *exif_entry)
+{
+	int data = 0;
+	for (size_t i = 0; i < exif_entry->size; i++) {
+		data <<= 8;
+		data += exif_entry->data[i];
+	}
+	return data;
+}
+
+void Controller::parse_exif(const string &path, PictureInfo *picture_info)
+{
+	ExifEntry *exif_entry;
+
+	// open
+	ExifData *exif_data = exif_data_new_from_file(path.c_str());
+	if (!exif_data) {
+		g_warning("Failed to parse exif: %s\n", path.c_str());
+		return;
+	}
+
+	// rotation
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_ORIENTATION);
+	if (exif_entry) {
+		if (exif_entry->format != EXIF_FORMAT_SHORT) {
+			g_warning("Format of ORIENTATION: unexpected: %d",
+			          exif_entry->format);
+		} else {
+			picture_info->orientation =
+			  static_cast<Orientation>(get_integer(exif_entry));
+		}
+	} else {
+		g_warning("Failed to parse ORIENTATION");
+	}
+	exif_data_unref(exif_data);
+}
+
 void Controller::connect_signals(void)
 {
 	g_signal_connect(m_widget, "key-press-event",

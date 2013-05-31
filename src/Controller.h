@@ -20,9 +20,32 @@
 
 #include <string>
 #include <gtk/gtk.h>
+#include <libexif/exif-data.h>
 #include "ImageView.h"
 
 using namespace std;
+
+enum Orientation
+{
+	ORIENTATION_UNKNOWN           = 0,
+	ORIENTATION_NORMAL            = 1,
+	ORIENTATION_MIRROR_H          = 2,
+	ORIENTATION_ROT_180           = 3,
+	ORIENTATION_MIRROR_V          = 4,
+	ORIENTATION_MIRROR_H_ROT_270  = 5,
+	ORIENTATION_ROT_90            = 6,
+	ORIENTATION_MIRROR_H_ROT_90   = 7,
+	ORIENTATION_ROT_270           = 8,
+};
+
+struct PictureInfo {
+	Orientation orientation;
+
+	PictureInfo(void)
+	: orientation(ORIENTATION_UNKNOWN)
+	{
+	}
+};
 
 class Controller
 {
@@ -36,6 +59,8 @@ private:
 	GtkWidget *m_widget;
 	ImageView  m_image_view;
 
+	int get_integer(ExifEntry *exif_entry);
+	void parse_exif(const string &path, PictureInfo *picture_info);
 	void connect_signals(void);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);

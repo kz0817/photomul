@@ -17,6 +17,12 @@ GTK_REQUIRED=3.6
 PKG_CHECK_MODULES(GTK, gtk+-3.0 >= $GTK_REQUIRED)
 
 dnl **************************************************************
+dnl Checks for GTK+
+dnl **************************************************************
+LIBEXIF_REQUIRED=0.6
+PKG_CHECK_MODULES(LIBEXIF, libexif >= $LIBEXIF_REQUIRED)
+
+dnl **************************************************************
 dnl Results
 dnl **************************************************************
 
