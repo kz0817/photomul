@@ -68,6 +68,7 @@ void Controller::set_path(const string &path)
 		g_warning(
 		  "Failed to call cairo_image_surface_create(): "
 		  "%s: %d\n", path.c_str(), stat);
+		return;
 	}
 
 	// convert data
