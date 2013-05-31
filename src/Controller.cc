@@ -118,6 +118,7 @@ int Controller::get_integer(ExifEntry *exif_entry)
 void Controller::rotate_picture_if_needed(PictureInfo *picture_info)
 {
 	GdkPixbuf *pixbuf = NULL;
+	GdkPixbuf *src = picture_info->pixbuf;
 	switch (picture_info->orientation) {
 	case ORIENTATION_UNKNOWN:
 	case ORIENTATION_NORMAL:
@@ -126,17 +127,21 @@ void Controller::rotate_picture_if_needed(PictureInfo *picture_info)
 	case ORIENTATION_ROT_180:
 	case ORIENTATION_MIRROR_V:
 	case ORIENTATION_MIRROR_H_ROT_270:
+		g_warning("Not implemented: rotation %d",
+		          picture_info->orientation);
+		return;
 	case ORIENTATION_ROT_90:
+		pixbuf = gdk_pixbuf_rotate_simple
+		           (src, GDK_PIXBUF_ROTATE_CLOCKWISE);
+		break;
 	case ORIENTATION_MIRROR_H_ROT_90:
 		g_warning("Not implemented: rotation %d",
 		          picture_info->orientation);
 		return;
-	case ORIENTATION_ROT_270: {
-		GdkPixbuf *src = picture_info->pixbuf;
+	case ORIENTATION_ROT_270:
 		pixbuf = gdk_pixbuf_rotate_simple
 		           (src, GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE);
 		break;
-	}
 	default:
 		g_warning("Unknown rotation %d",
 		          picture_info->orientation);
