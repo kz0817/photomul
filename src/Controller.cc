@@ -42,7 +42,9 @@ PictureInfo::~PictureInfo()
 // Public methods
 // ----------------------------------------------------------------------------
 Controller::Controller(void)
-: m_widget(NULL)
+: m_widget(NULL),
+  m_curr_dir(NULL),
+  m_in_making_file_list(false)
 {
 	m_widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_can_focus(m_widget, TRUE); 
@@ -119,6 +121,9 @@ void Controller::set_path(const string &path)
 
 	picture_info->surface = surf;
 	m_image_view.set_cairo_surface(surf);
+
+	// set current directory
+	set_current_directory(path);
 }
 
 // ----------------------------------------------------------------------------
@@ -173,6 +178,51 @@ void Controller::rotate_picture_if_needed(PictureInfo *picture_info)
 	}
 	g_object_unref(picture_info->pixbuf);
 	picture_info->pixbuf = pixbuf;
+}
+
+void Controller::set_current_directory(const string &path)
+{
+	// check the path type
+	GFile *gfile = g_file_new_for_path(path.c_str());
+	GCancellable *cancellable = NULL;
+	GFileType file_type =
+	  g_file_query_file_type(gfile, G_FILE_QUERY_INFO_NONE, cancellable);
+	if (file_type == G_FILE_TYPE_UNKNOWN) {
+		// Probably the path doesn't exist.
+		g_object_unref(gfile);
+		return;
+	}
+
+	if (file_type == G_FILE_TYPE_DIRECTORY) {
+		set_current_directory(gfile);
+	} else if (file_type == G_FILE_TYPE_REGULAR) {
+		GFile *dir = g_file_get_parent(gfile);
+		set_current_directory(dir);
+		// If 'dir' is used, the used counter of it is incremented in
+		// the above set_current_directory(). So we have to call
+		// g_object_unref() here.
+		g_object_unref(dir);
+	} else {
+		g_warning("Unexpected file type: %d, %s",
+		          file_type, path.c_str());
+	}
+	g_object_unref(gfile);
+}
+
+void Controller::set_current_directory(GFile *dir)
+{
+	// We do nothing if 'dir' is the same directory as the current one.
+	if (m_curr_dir &&
+	    strcmp(g_file_get_path(m_curr_dir), g_file_get_path(dir)) == 0) {
+		return;
+	}
+
+	if (m_curr_dir)
+		g_object_unref(m_curr_dir);
+	m_curr_dir = dir;
+	g_object_ref(m_curr_dir);
+	g_debug("New current path: %s", g_file_get_path(m_curr_dir));
+	m_in_making_file_list = true;
 }
 
 void Controller::parse_exif(const string &path, PictureInfo *picture_info)

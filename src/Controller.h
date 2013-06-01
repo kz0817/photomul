@@ -19,6 +19,7 @@
 #define Controller_h
 
 #include <string>
+#include <list>
 #include <gtk/gtk.h>
 #include <libexif/exif-data.h>
 #include "ImageView.h"
@@ -60,10 +61,16 @@ public:
 private:
 	GtkWidget *m_widget;
 	ImageView  m_image_view;
+	GFile     *m_curr_dir;
+	list<string>           m_file_list;
+	list<string>::iterator m_file_list_itr;
+	bool                   m_in_making_file_list;
 
 	int get_integer(ExifEntry *exif_entry);
 	void parse_exif(const string &path, PictureInfo *picture_info);
 	void rotate_picture_if_needed(PictureInfo *picture_info);
+	void set_current_directory(const string &path);
+	void set_current_directory(GFile *dir);
 	void connect_signals(void);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);
