@@ -16,6 +16,7 @@
 */
 
 #include <cstring>
+#include <algorithm>
 #include <stdint.h>
 #include <libexif/exif-data.h>
 #include "Controller.h"
@@ -44,8 +45,11 @@ PictureInfo::~PictureInfo()
 Controller::Controller(void)
 : m_widget(NULL),
   m_curr_dir(NULL),
-  m_in_making_file_list(false)
+  m_file_list_cancellable(NULL)
 {
+	m_supported_extensions.insert("jpg");
+	m_supported_extensions.insert("jpeg");
+
 	m_widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_can_focus(m_widget, TRUE); 
 	connect_signals();
@@ -222,7 +226,15 @@ void Controller::set_current_directory(GFile *dir)
 	m_curr_dir = dir;
 	g_object_ref(m_curr_dir);
 	g_debug("New current path: %s", g_file_get_path(m_curr_dir));
-	m_in_making_file_list = true;
+
+	// list up files in the directory.
+	const char *attributes = "";
+	m_file_list_cancellable = g_cancellable_new();
+	g_file_enumerate_children_async(m_curr_dir, attributes,
+	                                G_FILE_QUERY_INFO_NONE,
+	                                G_PRIORITY_DEFAULT,
+	                                m_file_list_cancellable,
+	                                file_enum_ready_cb, this);
 }
 
 void Controller::parse_exif(const string &path, PictureInfo *picture_info)
@@ -269,4 +281,92 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 	}
 	g_debug("Key press event: %u", keyval);
 	return TRUE;
+}
+
+void Controller::request_file_enum_next(GFileEnumerator *file_enum)
+{
+	int num_request_files = 1;
+	g_file_enumerator_next_files_async(file_enum, num_request_files,
+	                                   G_PRIORITY_DEFAULT,
+	                                   m_file_list_cancellable,
+	                                   file_enum_next_cb, this);
+}
+
+void Controller::cleanup_file_enum(void)
+{
+	// free cancellable object
+	g_object_unref(m_file_list_cancellable);
+	m_file_list_cancellable = NULL;
+}
+
+bool Controller::is_supported_picture(const string &file_name)
+{
+	// get the position of the last '.'
+	size_t pos = file_name.find_last_of('.');
+	if (pos == string::npos)
+		return false;
+
+	// get the extension in small letters
+	string ext(file_name, pos + 1);
+	transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+	// check if the extension is the supported 
+	set<string>::iterator it = m_supported_extensions.find(ext);
+	return it != m_supported_extensions.end();
+}
+
+void Controller::file_enum_ready_cb(GObject *source_object,
+                                    GAsyncResult *res, gpointer user_data)
+{
+	Controller *obj = static_cast<Controller *>(user_data);
+	GError *error = NULL;
+	GFileEnumerator *file_enum =
+	  g_file_enumerate_children_finish(G_FILE(source_object), res, &error);
+	if (!file_enum) {
+		g_warning("Failed to g_file_enumerate_children_finish: %s: %s",
+		          g_file_get_path(obj->m_curr_dir), error->message);
+		g_error_free(error);
+		obj->cleanup_file_enum();
+		return;
+	}
+	obj->request_file_enum_next(file_enum);
+}
+
+void Controller::file_enum_next_cb(GObject *source_object,
+                                   GAsyncResult *res, gpointer user_data)
+{
+	Controller *obj = static_cast<Controller *>(user_data);
+	GError *error = NULL;
+	GFileEnumerator *file_enum = G_FILE_ENUMERATOR(source_object);
+	GList *list =
+	  g_file_enumerator_next_files_finish(file_enum, res, &error);
+	if (error) {
+		g_warning("Failed to g_file_enumerate_children_finish: %s: %s",
+		          g_file_get_path(obj->m_curr_dir), error->message);
+		g_error_free(error);
+		obj->cleanup_file_enum();
+		return;
+	}
+
+	size_t count = 0;
+	for (; list; list = g_list_next(list), count++) {
+		GFileInfo *file_info = G_FILE_INFO(list->data);
+		GFileType type = g_file_info_get_file_type(file_info);
+		if (type != G_FILE_TYPE_REGULAR)
+			continue;
+		const char *file_name = g_file_info_get_name(file_info);
+		if (!obj->is_supported_picture(file_name))
+			continue;
+		g_debug("FILE: %s", file_name);
+		g_object_unref(file_info);
+	}
+	g_list_free(list);
+
+	if (count != 0) {
+		// request the next file
+		obj->request_file_enum_next(file_enum);
+		return;
+	}
+
+	obj->cleanup_file_enum();
 }

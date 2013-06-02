@@ -20,6 +20,7 @@
 
 #include <string>
 #include <list>
+#include <set>
 #include <gtk/gtk.h>
 #include <libexif/exif-data.h>
 #include "ImageView.h"
@@ -62,9 +63,12 @@ private:
 	GtkWidget *m_widget;
 	ImageView  m_image_view;
 	GFile     *m_curr_dir;
+	set<string>            m_supported_extensions;
 	list<string>           m_file_list;
 	list<string>::iterator m_file_list_itr;
-	bool                   m_in_making_file_list;
+
+	// This variable is not null during the making of file list.
+	GCancellable          *m_file_list_cancellable;
 
 	int get_integer(ExifEntry *exif_entry);
 	void parse_exif(const string &path, PictureInfo *picture_info);
@@ -72,8 +76,15 @@ private:
 	void set_current_directory(const string &path);
 	void set_current_directory(GFile *dir);
 	void connect_signals(void);
+	void request_file_enum_next(GFileEnumerator *file_enum);
+	void cleanup_file_enum(void);
+	bool is_supported_picture(const string &file_name);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);
+	static void file_enum_ready_cb(GObject *source_object,
+	                               GAsyncResult *res, gpointer user_data);
+	static void file_enum_next_cb(GObject *source_object,
+	                              GAsyncResult *res, gpointer user_data);
 };
 
 #endif // Controller_h
