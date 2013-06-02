@@ -24,32 +24,9 @@
 #include <gtk/gtk.h>
 #include <libexif/exif-data.h>
 #include "ImageView.h"
+#include "PictureInfo.h"
 
 using namespace std;
-
-enum Orientation
-{
-	ORIENTATION_UNKNOWN           = 0,
-	ORIENTATION_NORMAL            = 1,
-	ORIENTATION_MIRROR_H          = 2,
-	ORIENTATION_ROT_180           = 3,
-	ORIENTATION_MIRROR_V          = 4,
-	ORIENTATION_MIRROR_H_ROT_270  = 5,
-	ORIENTATION_ROT_90            = 6,
-	ORIENTATION_MIRROR_H_ROT_90   = 7,
-	ORIENTATION_ROT_270           = 8,
-};
-
-struct PictureInfo {
-	GFile       *gfile;
-	Orientation orientation;
-	GdkPixbuf  *pixbuf;
-	cairo_surface_t *surface;
-
-	// methods
-	PictureInfo(void);
-	virtual ~PictureInfo();
-};
 
 class Controller
 {

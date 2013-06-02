@@ -17,30 +17,8 @@
 
 #include <cstring>
 #include <algorithm>
-#include <stdint.h>
 #include <libexif/exif-data.h>
 #include "Controller.h"
-
-// ----------------------------------------------------------------------------
-// PictureInfo
-// ----------------------------------------------------------------------------
-PictureInfo::PictureInfo(void)
-: gfile(NULL),
-  orientation(ORIENTATION_UNKNOWN),
-  pixbuf(NULL),
-  surface(NULL)
-{
-}
-
-PictureInfo::~PictureInfo()
-{
-	if (gfile)
-		g_object_unref(gfile);
-	if (pixbuf)
-		g_object_unref(pixbuf);
-	if (surface)
-		cairo_surface_destroy(surface);
-}
 
 // ----------------------------------------------------------------------------
 // Public methods
@@ -94,41 +72,8 @@ void Controller::set_path(const string &path)
 	// rotation if needed
 	rotate_picture_if_needed(picture_info);
 
-	// make cairo surface
-	size_t n_channels = gdk_pixbuf_get_n_channels(picture_info->pixbuf);
-	if (n_channels != 3) {
-		g_warning(
-		  "color channel is %zd: %s", n_channels, path.c_str());
-		return;
-	}
-	size_t src_width = gdk_pixbuf_get_width(picture_info->pixbuf);
-	size_t src_height = gdk_pixbuf_get_height(picture_info->pixbuf);
-	cairo_surface_t *surf = cairo_image_surface_create(
-	                          CAIRO_FORMAT_RGB24,
-	                          src_width, src_height);
-	cairo_status_t stat = cairo_surface_status(surf);
-	if (stat != CAIRO_STATUS_SUCCESS) {
-		g_warning(
-		  "Failed to call cairo_image_surface_create(): "
-		  "%s: %d\n", path.c_str(), stat);
-		return;
-	}
-
-	// convert data
-	uint8_t *src = gdk_pixbuf_get_pixels(picture_info->pixbuf);
-	uint8_t *buf = cairo_image_surface_get_data(surf);
-	for (size_t y = 0; y < src_height;  y++) {
-		for (size_t x = 0; x < src_width; x++) {
-			buf[0] = src[2];
-			buf[1] = src[1];
-			buf[2] = src[0];
-			src += n_channels;
-			buf += 4; // cairo's pix is always 32bit.
-		}
-	}
-
-	picture_info->surface = surf;
-	m_image_view.set_cairo_surface(surf);
+	// set the picture_info to ImageView (the picture will be shown)
+	m_image_view.set_picture_info(picture_info);
 
 	// set current directory
 	m_curr_picture_info = picture_info;

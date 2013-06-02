@@ -20,6 +20,7 @@
 
 #include <string>
 #include <gtk/gtk.h>
+#include "PictureInfo.h"
 
 using namespace std;
 
@@ -28,15 +29,17 @@ public:
 	ImageView(void);
 	virtual ~ImageView();
 	GtkWidget *get_widget(void);
-	void set_cairo_surface(cairo_surface_t *surface);
+	void set_picture_info(PictureInfo *picture_info);
 private:
 	GtkWidget *m_widget;
 	cairo_surface_t *m_surface;
+	PictureInfo *m_picture_info;
 	size_t m_area_width, m_area_height;
 	size_t m_surf_width, m_surf_height;
 	float m_area_aspect_ratio, m_surf_aspect_ratio;;
 	
 	void connect_signals(void);
+	bool prepare_surface(void);
 
 	static gboolean
 	_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data);

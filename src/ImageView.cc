@@ -15,6 +15,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdint.h>
 #include "ImageView.h"
 
 // ----------------------------------------------------------------------------
@@ -23,6 +24,7 @@
 ImageView::ImageView(void)
 : m_widget(NULL),
   m_surface(NULL),
+  m_picture_info(NULL),
   m_area_width(0),
   m_area_height(0),
   m_surf_width(0),
@@ -34,6 +36,8 @@ ImageView::ImageView(void)
 
 ImageView::~ImageView(void)
 {
+	if (m_surface)
+		cairo_surface_destroy(m_surface);
 }
 
 GtkWidget *ImageView::get_widget(void)
@@ -45,12 +49,16 @@ GtkWidget *ImageView::get_widget(void)
 	return m_widget;
 }
 
-void ImageView::set_cairo_surface(cairo_surface_t *surface)
+void ImageView::set_picture_info(PictureInfo *picture_info)
 {
-	m_surface = surface;
-	m_surf_width = cairo_image_surface_get_width(surface);
-	m_surf_height = cairo_image_surface_get_height(surface);
-	m_surf_aspect_ratio = (float)m_surf_width / m_surf_height;
+	m_picture_info = picture_info;
+	m_surf_width = 0;
+	m_surf_height = 0;
+	m_surf_aspect_ratio = 1.0;
+	if (m_surface) {
+		cairo_surface_destroy(m_surface);
+		m_surface = NULL;
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -64,6 +72,64 @@ void ImageView::connect_signals(void)
 	                 G_CALLBACK(_configure_event), this);
 }
 
+bool ImageView::prepare_surface(void)
+{
+	if (m_surface)
+		return true;
+
+	if (!m_picture_info) {
+		g_error("m_picture_info: NULL");
+		return false;
+	}
+
+	if (!m_picture_info->pixbuf) {
+		g_error("m_picture_info->pixbuf: NULL");
+		return false;
+	}
+
+	// make cairo surface
+	size_t n_channels = gdk_pixbuf_get_n_channels(m_picture_info->pixbuf);
+	if (n_channels != 3) {
+		g_warning(
+		  "color channel is %zd: %s", n_channels,
+		  g_file_get_path(m_picture_info->gfile));
+		return false;
+	}
+	size_t src_width  = gdk_pixbuf_get_width(m_picture_info->pixbuf);
+	size_t src_height = gdk_pixbuf_get_height(m_picture_info->pixbuf);
+	cairo_surface_t *surf = cairo_image_surface_create(
+	                          CAIRO_FORMAT_RGB24,
+	                          src_width, src_height);
+	cairo_status_t stat = cairo_surface_status(surf);
+	if (stat != CAIRO_STATUS_SUCCESS) {
+		g_warning(
+		  "Failed to call cairo_image_surface_create(): "
+		  "%s: %d\n",
+		  g_file_get_path(m_picture_info->gfile), stat);
+		return false;
+	}
+
+	// convert data
+	uint8_t *src = gdk_pixbuf_get_pixels(m_picture_info->pixbuf);
+	uint8_t *buf = cairo_image_surface_get_data(surf);
+	for (size_t y = 0; y < src_height;  y++) {
+		for (size_t x = 0; x < src_width; x++) {
+			buf[0] = src[2];
+			buf[1] = src[1];
+			buf[2] = src[0];
+			src += n_channels;
+			buf += 4; // cairo's pix is always 32bit.
+		}
+	}
+
+	// calculate surface info
+	m_surf_width = cairo_image_surface_get_width(surf);
+	m_surf_height = cairo_image_surface_get_height(surf);
+	m_surf_aspect_ratio = (float)m_surf_width / m_surf_height;
+	m_surface = surf;
+	return true;
+}
+
 gboolean ImageView::_draw(GtkWidget *widget, cairo_t *cr,
                           gpointer user_data)
 {
@@ -74,8 +140,8 @@ gboolean ImageView::_draw(GtkWidget *widget, cairo_t *cr,
 gboolean ImageView::draw(GtkWidget *widget, cairo_t *cr)
 {
 	g_debug("DRAW");
-	if (!m_surface)
-		g_debug("surface: NULL");
+	if (!prepare_surface())
+		return FALSE;
 
 	// draw block for all region
 	cairo_set_source_rgb(cr, 0, 0, 0);
