@@ -74,9 +74,11 @@ void ImageView::connect_signals(void)
 
 bool ImageView::prepare_surface(void)
 {
+	// return immediately if we already have the surface
 	if (m_surface)
 		return true;
 
+	// check if the required variables have been prepared.
 	if (!m_picture_info) {
 		g_error("m_picture_info: NULL");
 		return false;
