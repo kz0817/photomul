@@ -25,7 +25,8 @@
 // PictureInfo
 // ----------------------------------------------------------------------------
 PictureInfo::PictureInfo(void)
-: orientation(ORIENTATION_UNKNOWN),
+: gfile(NULL),
+  orientation(ORIENTATION_UNKNOWN),
   pixbuf(NULL),
   surface(NULL)
 {
@@ -33,6 +34,8 @@ PictureInfo::PictureInfo(void)
 
 PictureInfo::~PictureInfo()
 {
+	if (gfile)
+		g_object_unref(gfile);
 	if (pixbuf)
 		g_object_unref(pixbuf);
 	if (surface)
@@ -45,6 +48,7 @@ PictureInfo::~PictureInfo()
 Controller::Controller(void)
 : m_widget(NULL),
   m_curr_dir(NULL),
+  m_curr_picture_info(NULL),
   m_file_list_cancellable(NULL)
 {
 	m_supported_extensions.insert("jpg");
@@ -70,7 +74,7 @@ GtkWidget *Controller::get_widget(void)
 void Controller::set_path(const string &path)
 {
 	PictureInfo *picture_info = new PictureInfo();
-	picture_info->path = path;
+	picture_info->gfile = g_file_new_for_path(path.c_str());
 
 	// exif
 	parse_exif(path, picture_info);
@@ -127,6 +131,7 @@ void Controller::set_path(const string &path)
 	m_image_view.set_cairo_surface(surf);
 
 	// set current directory
+	m_curr_picture_info = picture_info;
 	set_current_directory(path);
 }
 
@@ -315,6 +320,24 @@ bool Controller::is_supported_picture(const string &file_name)
 	return it != m_supported_extensions.end();
 }
 
+void Controller::add_picture_of_curr_dir(GFileInfo *file_info)
+{
+	const char *file_name = g_file_info_get_name(file_info);
+	g_debug("added to the file list: %s", file_name);
+	m_file_list.push_back(file_name);
+
+	// set iterator for current position if the file is the pic. shown now
+	if (m_curr_picture_info) {
+		const char *curr_shown_file_name =
+		  g_file_get_basename(m_curr_picture_info->gfile);
+		if (strcmp(curr_shown_file_name, file_name) == 0) {
+			g_debug(
+			  "Found the currently shown picture for iterator.");
+			m_file_list_itr = m_file_list.rbegin().base();
+		}
+	}
+}
+
 void Controller::file_enum_ready_cb(GObject *source_object,
                                     GAsyncResult *res, gpointer user_data)
 {
@@ -357,7 +380,7 @@ void Controller::file_enum_next_cb(GObject *source_object,
 		const char *file_name = g_file_info_get_name(file_info);
 		if (!obj->is_supported_picture(file_name))
 			continue;
-		g_debug("FILE: %s", file_name);
+		obj->add_picture_of_curr_dir(file_info);
 		g_object_unref(file_info);
 	}
 	g_list_free(list);
@@ -367,6 +390,7 @@ void Controller::file_enum_next_cb(GObject *source_object,
 		obj->request_file_enum_next(file_enum);
 		return;
 	}
+	g_debug("Successfully got file list.");
 
 	obj->cleanup_file_enum();
 }

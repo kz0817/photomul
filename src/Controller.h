@@ -41,7 +41,7 @@ enum Orientation
 };
 
 struct PictureInfo {
-	string      path;
+	GFile       *gfile;
 	Orientation orientation;
 	GdkPixbuf  *pixbuf;
 	cairo_surface_t *surface;
@@ -63,6 +63,7 @@ private:
 	GtkWidget *m_widget;
 	ImageView  m_image_view;
 	GFile     *m_curr_dir;
+	PictureInfo *m_curr_picture_info;
 	set<string>            m_supported_extensions;
 	list<string>           m_file_list;
 	list<string>::iterator m_file_list_itr;
@@ -79,6 +80,7 @@ private:
 	void request_file_enum_next(GFileEnumerator *file_enum);
 	void cleanup_file_enum(void);
 	bool is_supported_picture(const string &file_name);
+	void add_picture_of_curr_dir(GFileInfo *file_info);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);
 	static void file_enum_ready_cb(GObject *source_object,
