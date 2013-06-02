@@ -177,6 +177,10 @@ void Controller::set_current_directory(GFile *dir)
 	g_object_ref(m_curr_dir);
 	g_debug("New current path: %s", g_file_get_path(m_curr_dir));
 
+	// clear file list information
+	m_file_list.clear();
+	m_file_list_itr = m_file_list.end();
+
 	// list up files in the directory.
 	const char *attributes = "";
 	m_file_list_cancellable = g_cancellable_new();
@@ -223,6 +227,7 @@ void Controller::connect_signals(void)
 gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
                                       gpointer user_data)
 {
+	Controller *obj = static_cast<Controller *>(user_data);
 	guint keyval;
 	gboolean succeeded = gdk_event_get_keyval(event, &keyval);
 	if (!succeeded) {
@@ -230,6 +235,8 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		return FALSE;
 	}
 	g_debug("Key press event: %u", keyval);
+	if (keyval == ' ')
+		obj->show_next();
 	return TRUE;
 }
 
@@ -247,6 +254,23 @@ void Controller::cleanup_file_enum(void)
 	// free cancellable object
 	g_object_unref(m_file_list_cancellable);
 	m_file_list_cancellable = NULL;
+}
+
+void Controller::show_next(void)
+{
+	if (m_file_list_itr == m_file_list.end()) {
+		g_warning("File list iterator is not set.");
+		return;
+	}
+	if (m_file_list.empty()) {
+		g_warning("File list is empty.");
+		return;
+	}
+
+	m_file_list_itr++;
+	if (m_file_list_itr == m_file_list.end())
+		m_file_list_itr = m_file_list.begin();
+	g_message("next file: %s", m_file_list_itr->c_str());
 }
 
 bool Controller::is_supported_picture(const string &file_name)
@@ -278,7 +302,8 @@ void Controller::add_picture_of_curr_dir(GFileInfo *file_info)
 		if (strcmp(curr_shown_file_name, file_name) == 0) {
 			g_debug(
 			  "Found the currently shown picture for iterator.");
-			m_file_list_itr = m_file_list.rbegin().base();
+			m_file_list_itr = m_file_list.end();
+			m_file_list_itr--;
 		}
 	}
 }
