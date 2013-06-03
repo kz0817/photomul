@@ -264,6 +264,7 @@ void Controller::connect_signals(void)
 gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
                                       gpointer user_data)
 {
+	static const guint KEYCODE_BACKSPACE = 65288;
 	Controller *obj = static_cast<Controller *>(user_data);
 	guint keyval;
 	gboolean succeeded = gdk_event_get_keyval(event, &keyval);
@@ -274,6 +275,8 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 	g_debug("Key press event: %u", keyval);
 	if (keyval == ' ')
 		obj->show_next();
+	else if (keyval == KEYCODE_BACKSPACE)
+		obj->show_prev();
 	return TRUE;
 }
 
@@ -293,16 +296,35 @@ void Controller::cleanup_file_enum(void)
 	m_file_list_cancellable = NULL;
 }
 
-void Controller::show_next(void)
+bool Controller::show_check_common(void)
 {
 	if (m_file_list_itr == m_file_list.end()) {
 		g_warning("File list iterator is not set.");
-		return;
+		return false;
 	}
 	if (m_file_list.empty()) {
 		g_warning("File list is empty.");
-		return;
+		return false;
 	}
+	return true;
+}
+
+void Controller::show_prev(void)
+{
+	if (!show_check_common())
+		return;
+
+	if (m_file_list_itr == m_file_list.begin())
+		m_file_list_itr = m_file_list.end();
+	m_file_list_itr--;
+	g_message("prev file: %s", m_file_list_itr->c_str());
+	set_path(*m_file_list_itr);
+}
+
+void Controller::show_next(void)
+{
+	if (!show_check_common())
+		return;
 
 	m_file_list_itr++;
 	if (m_file_list_itr == m_file_list.end())

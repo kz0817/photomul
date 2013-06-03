@@ -77,6 +77,8 @@ private:
 	void connect_signals(void);
 	void request_file_enum_next(GFileEnumerator *file_enum);
 	void cleanup_file_enum(void);
+	bool show_check_common(void);
+	void show_prev(void);
 	void show_next(void);
 	bool is_supported_picture(const string &file_name);
 	void add_picture_of_curr_dir(GFileInfo *file_info);
