@@ -273,9 +273,9 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		return FALSE;
 	}
 	g_debug("Key press event: %u", keyval);
-	if (keyval == ' ')
+	if (keyval == ' ' || keyval == 'j')
 		obj->show_next();
-	else if (keyval == KEYCODE_BACKSPACE)
+	else if (keyval == KEYCODE_BACKSPACE || keyval == 'k')
 		obj->show_prev();
 	return TRUE;
 }

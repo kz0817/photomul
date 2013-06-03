@@ -4,10 +4,12 @@ photomul
 photomul is a simple picture viewer.
 
 =============================================================================
-Keyboard assignment (to be implemented)
+Keyboard assignment
 =============================================================================
-[Space]     : show the next picture
-[Backspace] : show the previous picture
+[Space] or j     : show the next picture
+[Backspace] or k : show the previous picture
+
+(Below are to be implemented)
 [ESC]       : exit from full screen mode
 i           : show/hide picture information
 f           : go full screen mode
