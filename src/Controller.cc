@@ -83,6 +83,18 @@ void Controller::set_path(const string &path)
 // ----------------------------------------------------------------------------
 // Private methods
 // ----------------------------------------------------------------------------
+string Controller::get_current_dir_name(void)
+{
+	if (!m_curr_dir) {
+		g_warning("m_curr_dir: NULL at %s", __PRETTY_FUNCTION__);
+		return "";
+	}
+	char *dir_name = g_file_get_path(m_curr_dir);
+	string dir = g_file_get_path(m_curr_dir);
+	g_free(dir_name);
+	return dir;
+}
+
 int Controller::get_integer(ExifEntry *exif_entry)
 {
 	int data = 0;
@@ -271,6 +283,7 @@ void Controller::show_next(void)
 	if (m_file_list_itr == m_file_list.end())
 		m_file_list_itr = m_file_list.begin();
 	g_message("next file: %s", m_file_list_itr->c_str());
+	set_path(*m_file_list_itr);
 }
 
 bool Controller::is_supported_picture(const string &file_name)
@@ -293,7 +306,10 @@ void Controller::add_picture_of_curr_dir(GFileInfo *file_info)
 {
 	const char *file_name = g_file_info_get_name(file_info);
 	g_debug("added to the file list: %s", file_name);
-	m_file_list.push_back(file_name);
+	string path = get_current_dir_name();
+	path += G_DIR_SEPARATOR;
+	path += file_name;
+	m_file_list.push_back(path);
 
 	// set iterator for current position if the file is the pic. shown now
 	if (m_curr_picture_info) {

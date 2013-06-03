@@ -59,6 +59,8 @@ void ImageView::set_picture_info(PictureInfo *picture_info)
 		cairo_surface_destroy(m_surface);
 		m_surface = NULL;
 	}
+	if (m_widget)
+		gtk_widget_queue_draw(m_widget);
 }
 
 // ----------------------------------------------------------------------------

@@ -48,6 +48,7 @@ private:
 	// This variable is not null during the making of file list.
 	GCancellable          *m_file_list_cancellable;
 
+	string get_current_dir_name(void);
 	int get_integer(ExifEntry *exif_entry);
 	void parse_exif(const string &path, PictureInfo *picture_info);
 	void rotate_picture_if_needed(PictureInfo *picture_info);
