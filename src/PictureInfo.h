@@ -18,8 +18,11 @@
 #ifndef PictureInfo_h
 #define PictureInfo_h
 
+#include <string>
+#include <map>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
+using namespace std;
 
 enum Orientation
 {
@@ -43,5 +46,8 @@ struct PictureInfo {
 	PictureInfo(void);
 	virtual ~PictureInfo();
 };
+
+typedef map<string, PictureInfo *> PictureInfoMap;
+typedef PictureInfoMap::iterator   PictureInfoMapIterator;
 
 #endif // PictureInfo_h

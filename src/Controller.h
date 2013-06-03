@@ -44,6 +44,7 @@ private:
 	set<string>            m_supported_extensions;
 	list<string>           m_file_list;
 	list<string>::iterator m_file_list_itr;
+	PictureInfoMap         m_picture_info_map;
 
 	// This variable is not null during the making of file list.
 	GCancellable          *m_file_list_cancellable;
@@ -52,6 +53,25 @@ private:
 	int get_integer(ExifEntry *exif_entry);
 	void parse_exif(const string &path, PictureInfo *picture_info);
 	void rotate_picture_if_needed(PictureInfo *picture_info);
+
+	/**
+	 * make a new instance of PictureInfo with loading a picture.
+	 * @path
+	 * A path of the target picture file
+	 * @return
+	 * A PictureInfo instance on success. Otherwise NULL.
+	 */
+	PictureInfo *make_picture_info(const string &path);
+
+	/**
+	 * find the the PictureInfo in m_picture_info_set with path.
+	 * @path
+	 * A path of the target picture file
+	 * @return
+	 * The found PictureInfo instance on success. Otherwise NULL.
+	 */
+	PictureInfo *find_picture_info(const string &path);
+
 	void set_current_directory(const string &path);
 	void set_current_directory(GFile *dir);
 	void connect_signals(void);

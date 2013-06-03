@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <libexif/exif-data.h>
 #include "Controller.h"
+#include "Utils.h"
 
 // ----------------------------------------------------------------------------
 // Public methods
@@ -42,6 +43,9 @@ Controller::Controller(void)
 
 Controller::~Controller()
 {
+	PictureInfoMapIterator it = m_picture_info_map.begin();
+	for (; it != m_picture_info_map.end(); ++it)
+		delete it->second;
 }
 
 GtkWidget *Controller::get_widget(void)
@@ -51,26 +55,14 @@ GtkWidget *Controller::get_widget(void)
 
 void Controller::set_path(const string &path)
 {
-	PictureInfo *picture_info = new PictureInfo();
-	picture_info->gfile = g_file_new_for_path(path.c_str());
-
-	// exif
-	parse_exif(path, picture_info);
-	g_message("%s: orientation: %d", path.c_str(),
-	          picture_info->orientation);
-
-	// make pixbuf
-	GError *error = NULL;
-	picture_info->pixbuf = gdk_pixbuf_new_from_file(path.c_str(), &error);
-	if (!picture_info->pixbuf) {
-		g_warning("Failed to open file: %s: %s",
-		          path.c_str(), error->message);
-		g_error_free(error);
-		return;
+	PictureInfo *picture_info = find_picture_info(path);
+	if (!picture_info) {
+		picture_info = make_picture_info(path);
+		if (!picture_info)
+			return;
+		// insert the instance to the set
+		m_picture_info_map[path] = picture_info;
 	}
-
-	// rotation if needed
-	rotate_picture_if_needed(picture_info);
 
 	// set the picture_info to ImageView (the picture will be shown)
 	m_image_view.set_picture_info(picture_info);
@@ -89,10 +81,7 @@ string Controller::get_current_dir_name(void)
 		g_warning("m_curr_dir: NULL at %s", __PRETTY_FUNCTION__);
 		return "";
 	}
-	char *dir_name = g_file_get_path(m_curr_dir);
-	string dir = g_file_get_path(m_curr_dir);
-	g_free(dir_name);
-	return dir;
+	return Utils::get_path(m_curr_dir);
 }
 
 int Controller::get_integer(ExifEntry *exif_entry)
@@ -146,6 +135,41 @@ void Controller::rotate_picture_if_needed(PictureInfo *picture_info)
 	picture_info->pixbuf = pixbuf;
 }
 
+PictureInfo *Controller::make_picture_info(const string &path)
+{
+	PictureInfo *picture_info = new PictureInfo();
+	picture_info->gfile = g_file_new_for_path(path.c_str());
+
+	// exif
+	parse_exif(path, picture_info);
+	g_message("%s: orientation: %d", path.c_str(),
+	          picture_info->orientation);
+
+	// make pixbuf
+	GError *error = NULL;
+	picture_info->pixbuf = gdk_pixbuf_new_from_file(path.c_str(), &error);
+	if (!picture_info->pixbuf) {
+		g_warning("Failed to open file: %s: %s",
+		          path.c_str(), error->message);
+		g_error_free(error);
+		delete picture_info;
+		return NULL;
+	}
+
+	// rotation if needed
+	rotate_picture_if_needed(picture_info);
+
+	return picture_info;
+}
+
+PictureInfo *Controller::find_picture_info(const string &path)
+{
+	PictureInfoMapIterator it = m_picture_info_map.find(path);
+	if (it == m_picture_info_map.end())
+		return NULL;
+	return it->second;
+}
+
 void Controller::set_current_directory(const string &path)
 {
 	// check the path type
@@ -179,7 +203,8 @@ void Controller::set_current_directory(GFile *dir)
 {
 	// We do nothing if 'dir' is the same directory as the current one.
 	if (m_curr_dir &&
-	    strcmp(g_file_get_path(m_curr_dir), g_file_get_path(dir)) == 0) {
+	    strcmp(Utils::get_path(m_curr_dir).c_str(),
+	           Utils::get_path(dir).c_str()) == 0) {
 		return;
 	}
 
@@ -187,7 +212,7 @@ void Controller::set_current_directory(GFile *dir)
 		g_object_unref(m_curr_dir);
 	m_curr_dir = dir;
 	g_object_ref(m_curr_dir);
-	g_debug("New current path: %s", g_file_get_path(m_curr_dir));
+	g_debug("New current path: %s", Utils::get_path(m_curr_dir).c_str());
 
 	// clear file list information
 	m_file_list.clear();
@@ -333,7 +358,8 @@ void Controller::file_enum_ready_cb(GObject *source_object,
 	  g_file_enumerate_children_finish(G_FILE(source_object), res, &error);
 	if (!file_enum) {
 		g_warning("Failed to g_file_enumerate_children_finish: %s: %s",
-		          g_file_get_path(obj->m_curr_dir), error->message);
+		          Utils::get_path(obj->m_curr_dir).c_str(),
+		          error->message);
 		g_error_free(error);
 		obj->cleanup_file_enum();
 		return;
@@ -351,7 +377,8 @@ void Controller::file_enum_next_cb(GObject *source_object,
 	  g_file_enumerator_next_files_finish(file_enum, res, &error);
 	if (error) {
 		g_warning("Failed to g_file_enumerate_children_finish: %s: %s",
-		          g_file_get_path(obj->m_curr_dir), error->message);
+		          Utils::get_path(obj->m_curr_dir).c_str(),
+		          error->message);
 		g_error_free(error);
 		obj->cleanup_file_enum();
 		return;
