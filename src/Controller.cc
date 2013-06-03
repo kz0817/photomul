@@ -203,8 +203,7 @@ void Controller::set_current_directory(GFile *dir)
 {
 	// We do nothing if 'dir' is the same directory as the current one.
 	if (m_curr_dir &&
-	    strcmp(Utils::get_path(m_curr_dir).c_str(),
-	           Utils::get_path(dir).c_str()) == 0) {
+	    Utils::get_path(m_curr_dir) == Utils::get_path(dir)) {
 		return;
 	}
 
