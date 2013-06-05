@@ -263,7 +263,7 @@ void Controller::connect_signals(void)
 gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
                                       gpointer user_data)
 {
-	static const guint KEYCODE_BACKSPACE = 65288;
+	// Key code definition can be found in gdk/gdkkeysms.h
 	Controller *obj = static_cast<Controller *>(user_data);
 	guint keyval;
 	gboolean succeeded = gdk_event_get_keyval(event, &keyval);
@@ -272,9 +272,9 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		return FALSE;
 	}
 	g_debug("Key press event: %u", keyval);
-	if (keyval == ' ' || keyval == 'j')
+	if (keyval == GDK_KEY_space || keyval == GDK_KEY_j)
 		obj->show_next();
-	else if (keyval == KEYCODE_BACKSPACE || keyval == 'k')
+	else if (keyval == GDK_KEY_BackSpace || keyval == GDK_KEY_k)
 		obj->show_prev();
 	return TRUE;
 }
