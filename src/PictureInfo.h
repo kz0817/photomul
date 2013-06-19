@@ -49,8 +49,17 @@ struct PictureInfo {
 	int fnumber_numerator;
 	int fnumber_denominator;
 
+	int iso_speed;
+
+	int exposure_bias_numerator;
+	int exposure_bias_denominator;
+
+	int focal_length_numerator;
+	int focal_length_denominator;
+
 	string maker;
 	string model;
+	string date_time;
 
 	// methods
 	PictureInfo(void);

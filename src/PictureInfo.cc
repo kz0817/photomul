@@ -20,7 +20,16 @@
 PictureInfo::PictureInfo(void)
 : gfile(NULL),
   orientation(ORIENTATION_UNKNOWN),
-  pixbuf(NULL)
+  pixbuf(NULL),
+  exposure_numerator(-1),
+  exposure_denominator(-1),
+  fnumber_numerator(-1),
+  fnumber_denominator(-1),
+  iso_speed(-1),
+  exposure_bias_numerator(-1),
+  exposure_bias_denominator(-1),
+  focal_length_numerator(-1),
+  focal_length_denominator(-1)
 {
 }
 

@@ -84,14 +84,16 @@ string Controller::get_current_dir_name(void)
 	return Utils::get_path(m_curr_dir);
 }
 
-int Controller::get_integer(ExifEntry *exif_entry)
+bool Controller::get_integer(ExifEntry *exif_entry, int &data)
 {
-	int data = 0;
+	if (!exif_entry)
+		return false;
+	data = 0;
 	for (size_t i = 0; i < exif_entry->size; i++) {
 		data <<= 8;
 		data += exif_entry->data[i];
 	}
-	return data;
+	return true;
 }
 
 bool Controller::get_rational(ExifEntry *exif_entry,
@@ -276,17 +278,12 @@ void Controller::parse_exif(const string &path, PictureInfo *picture_info)
 
 	// rotation
 	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_ORIENTATION);
-	if (exif_entry) {
-		if (exif_entry->format != EXIF_FORMAT_SHORT) {
-			g_warning("Format of ORIENTATION: unexpected: %d",
-			          exif_entry->format);
-		} else {
-			picture_info->orientation =
-			  static_cast<Orientation>(get_integer(exif_entry));
-		}
-	} else {
-		g_warning("Failed to parse ORIENTATION");
-	}
+	int orientation = ORIENTATION_UNKNOWN;
+	succeeded = get_integer(exif_entry, orientation);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_MAKE");
+	picture_info->orientation = static_cast<Orientation>(orientation);
+	g_debug("Orientation: %d", picture_info->orientation);
 
 	// shutter speed
 	exif_entry = exif_data_get_entry(exif_data,
@@ -327,19 +324,55 @@ void Controller::parse_exif(const string &path, PictureInfo *picture_info)
 	        picture_info->fnumber_numerator,
 	        picture_info->fnumber_denominator);
 
-	// maker
+	// maker, model
 	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_MAKE);
 	succeeded = get_string(exif_entry, picture_info->maker);
 	if (!succeeded)
 		g_warning("Failed to parse EXIF_TAG_MAKE");
 
-	// model
 	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_MODEL);
 	succeeded = get_string(exif_entry, picture_info->model);
 	if (!succeeded)
 		g_warning("Failed to parse EXIF_TAG_MODEL");
 	g_debug("Maker: Model: %s: %s",
 	        picture_info->maker.c_str(), picture_info->model.c_str());
+
+	// ISO
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_ISO_SPEED_RATINGS);
+	succeeded = get_integer(exif_entry, picture_info->iso_speed);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_ISO_SPEED_RATINGS");
+	g_debug("ISO: %d", picture_info->iso_speed);
+
+	// adjustment
+	exif_entry = exif_data_get_entry(exif_data,
+	                                 EXIF_TAG_EXPOSURE_BIAS_VALUE);
+	succeeded = get_rational(exif_entry,
+	                         picture_info->exposure_bias_numerator,
+	                         picture_info->exposure_bias_denominator);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_EXPOSURE_BIAS_VALUE");
+	g_debug("Expsure bias: %d/%d",
+	        picture_info->exposure_bias_numerator,
+	        picture_info->exposure_bias_denominator);
+
+	// focal length
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_FOCAL_LENGTH);
+	succeeded = get_rational(exif_entry,
+	                         picture_info->focal_length_numerator,
+	                         picture_info->focal_length_denominator);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_FOCAL_LENGTH");
+	g_debug("Focal length: %d/%d",
+	        picture_info->focal_length_numerator,
+	        picture_info->focal_length_denominator);
+
+	// date and time
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_DATE_TIME);
+	succeeded = get_string(exif_entry, picture_info->date_time);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_DATE_TIME");
+	g_debug("DATE: %s", picture_info->date_time.c_str());
 
 	// unref data
 	exif_data_unref(exif_data);
@@ -427,7 +460,19 @@ void Controller::show_next(void)
 
 void Controller::show_info(void)
 {
-	g_message("TO BE IMPLEMENTED: %s\n", __PRETTY_FUNCTION__);
+	g_message("SHOW_INFO ***********\n");
+	GtkWidget *
+	m_info_window = gtk_window_new(GTK_WINDOW_POPUP);
+	gtk_window_set_opacity(GTK_WINDOW(m_info_window), 0.8);
+	GtkWidget *label = gtk_label_new ("LABBBBBEL\nFOOOOO\nAAABB***");
+	gtk_container_add(GTK_CONTAINER(m_info_window), label);
+	GtkWidget *toplevel = gtk_widget_get_toplevel(m_widget);
+	//gtk_widget_set_parent_window(m_info_window,
+	//                             gtk_widget_get_window(toplevel));
+	gtk_window_set_transient_for(GTK_WINDOW(m_info_window),
+	                             GTK_WINDOW(toplevel));
+	gtk_window_set_keep_above(GTK_WINDOW(m_info_window), TRUE);
+	gtk_widget_show_all(m_info_window);
 }
 
 bool Controller::is_supported_picture(const string &file_name)

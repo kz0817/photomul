@@ -50,7 +50,7 @@ private:
 	GCancellable          *m_file_list_cancellable;
 
 	string get_current_dir_name(void);
-	int get_integer(ExifEntry *exif_entry);
+	bool get_integer(ExifEntry *exif_entry, int &data);
 	bool get_rational(ExifEntry *exif_entry,
 	                  int &numerator, int &denominator);
 	bool get_string(ExifEntry *exif_entry, string &str);
