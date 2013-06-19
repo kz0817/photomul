@@ -51,6 +51,9 @@ private:
 
 	string get_current_dir_name(void);
 	int get_integer(ExifEntry *exif_entry);
+	bool get_rational(ExifEntry *exif_entry,
+	                  int &numerator, int &denominator);
+	bool get_string(ExifEntry *exif_entry, string &str);
 	void parse_exif(const string &path, PictureInfo *picture_info);
 	void rotate_picture_if_needed(PictureInfo *picture_info);
 
@@ -80,6 +83,7 @@ private:
 	bool show_check_common(void);
 	void show_prev(void);
 	void show_next(void);
+	void show_info(void);
 	bool is_supported_picture(const string &file_name);
 	void add_picture_of_curr_dir(GFileInfo *file_info);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,

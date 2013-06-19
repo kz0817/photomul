@@ -42,6 +42,16 @@ struct PictureInfo {
 	Orientation orientation;
 	GdkPixbuf  *pixbuf;
 
+	// EXIF information
+	int exposure_numerator;
+	int exposure_denominator;
+
+	int fnumber_numerator;
+	int fnumber_denominator;
+
+	string maker;
+	string model;
+
 	// methods
 	PictureInfo(void);
 	virtual ~PictureInfo();

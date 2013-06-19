@@ -94,6 +94,41 @@ int Controller::get_integer(ExifEntry *exif_entry)
 	return data;
 }
 
+bool Controller::get_rational(ExifEntry *exif_entry,
+                              int &numerator, int &denominator)
+{
+	static const size_t EXPECTED_SIZE = 8;
+	if (!exif_entry)
+		return false;
+	if (exif_entry->size != EXPECTED_SIZE) {
+		g_warning("exif_entry->size != %zd: %d",
+		          EXPECTED_SIZE, exif_entry->size);
+		return false;
+	}
+
+	numerator = 0;
+	for (size_t i = 0; i < 4; i++) {
+		numerator <<= 8;
+		numerator += exif_entry->data[i];
+	}
+
+	denominator = 0;
+	for (size_t i = 5; i < 8; i++) {
+		denominator <<= 8;
+		denominator += exif_entry->data[i];
+	}
+
+	return true;
+}
+
+bool Controller::get_string(ExifEntry *exif_entry, string &str)
+{
+	if (!exif_entry)
+		return false;
+	str = string((const char *)exif_entry->data, exif_entry->size);
+	return true;
+}
+
 void Controller::rotate_picture_if_needed(PictureInfo *picture_info)
 {
 	GdkPixbuf *pixbuf = NULL;
@@ -229,6 +264,7 @@ void Controller::set_current_directory(GFile *dir)
 
 void Controller::parse_exif(const string &path, PictureInfo *picture_info)
 {
+	bool succeeded;
 	ExifEntry *exif_entry;
 
 	// open
@@ -251,6 +287,61 @@ void Controller::parse_exif(const string &path, PictureInfo *picture_info)
 	} else {
 		g_warning("Failed to parse ORIENTATION");
 	}
+
+	// shutter speed
+	exif_entry = exif_data_get_entry(exif_data,
+	                                 EXIF_TAG_SHUTTER_SPEED_VALUE);
+	if (exif_entry) {
+		printf("format: %d\n", exif_entry->format);
+	} else {
+		g_warning("Failed to parse EXIF_TAG_SHUTTER_SPEED_VALUE");
+	}
+
+	// aperture
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_APERTURE_VALUE);
+	if (exif_entry) {
+		printf("format: %d\n", exif_entry->format);
+	} else {
+		g_warning("Failed to parse EXIF_TAG_APERTURE_VALUE");
+	}
+
+	// exposure time
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_EXPOSURE_TIME);
+	succeeded = get_rational(exif_entry,
+	                         picture_info->exposure_numerator,
+	                         picture_info->exposure_denominator);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_EXPOSURE_TIME");
+	g_debug("Exposure time: %d/%d",
+	        picture_info->exposure_numerator,
+	        picture_info->exposure_denominator);
+
+	// F number
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_FNUMBER);
+	succeeded = get_rational(exif_entry,
+	                         picture_info->fnumber_numerator,
+	                         picture_info->fnumber_denominator);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_FNUMBER");
+	g_debug("F number: %d/%d",
+	        picture_info->fnumber_numerator,
+	        picture_info->fnumber_denominator);
+
+	// maker
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_MAKE);
+	succeeded = get_string(exif_entry, picture_info->maker);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_MAKE");
+
+	// model
+	exif_entry = exif_data_get_entry(exif_data, EXIF_TAG_MODEL);
+	succeeded = get_string(exif_entry, picture_info->model);
+	if (!succeeded)
+		g_warning("Failed to parse EXIF_TAG_MODEL");
+	g_debug("Maker: Model: %s: %s",
+	        picture_info->maker.c_str(), picture_info->model.c_str());
+
+	// unref data
 	exif_data_unref(exif_data);
 }
 
@@ -276,6 +367,8 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		obj->show_next();
 	else if (keyval == GDK_KEY_BackSpace || keyval == GDK_KEY_k)
 		obj->show_prev();
+	else if (keyval == GDK_KEY_i)
+		obj->show_info();
 	return TRUE;
 }
 
@@ -330,6 +423,11 @@ void Controller::show_next(void)
 		m_file_list_itr = m_file_list.begin();
 	g_message("next file: %s", m_file_list_itr->c_str());
 	set_path(*m_file_list_itr);
+}
+
+void Controller::show_info(void)
+{
+	g_message("TO BE IMPLEMENTED: %s\n", __PRETTY_FUNCTION__);
 }
 
 bool Controller::is_supported_picture(const string &file_name)
