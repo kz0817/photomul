@@ -33,12 +33,16 @@ Controller::Controller(void)
 	m_supported_extensions.insert("jpg");
 	m_supported_extensions.insert("jpeg");
 
-	m_widget = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_widget_set_can_focus(m_widget, TRUE); 
-	connect_signals();
-
-	gtk_box_pack_start(GTK_BOX(m_widget), m_image_view.get_widget(),
+	// box for the main picture
+	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), m_image_view.get_widget(),
 	                   TRUE, TRUE, 0);
+	
+	// overlay for the base
+	m_widget = gtk_overlay_new();
+	gtk_widget_set_can_focus(m_widget, TRUE);
+	connect_signals();
+	gtk_container_add(GTK_CONTAINER(m_widget), vbox);
 }
 
 Controller::~Controller()
@@ -461,18 +465,11 @@ void Controller::show_next(void)
 void Controller::show_info(void)
 {
 	g_message("SHOW_INFO ***********\n");
-	GtkWidget *
-	m_info_window = gtk_window_new(GTK_WINDOW_POPUP);
-	gtk_window_set_opacity(GTK_WINDOW(m_info_window), 0.8);
 	GtkWidget *label = gtk_label_new ("LABBBBBEL\nFOOOOO\nAAABB***");
-	gtk_container_add(GTK_CONTAINER(m_info_window), label);
-	GtkWidget *toplevel = gtk_widget_get_toplevel(m_widget);
-	//gtk_widget_set_parent_window(m_info_window,
-	//                             gtk_widget_get_window(toplevel));
-	gtk_window_set_transient_for(GTK_WINDOW(m_info_window),
-	                             GTK_WINDOW(toplevel));
-	gtk_window_set_keep_above(GTK_WINDOW(m_info_window), TRUE);
-	gtk_widget_show_all(m_info_window);
+	gtk_widget_set_halign(label, GTK_ALIGN_START);
+	gtk_widget_set_valign(label, GTK_ALIGN_START);
+	gtk_overlay_add_overlay(GTK_OVERLAY(m_widget), label);
+	gtk_widget_show_all(label);
 }
 
 bool Controller::is_supported_picture(const string &file_name)
