@@ -41,6 +41,7 @@ private:
 	ImageView  m_image_view;
 	GFile     *m_curr_dir;
 	PictureInfo *m_curr_picture_info;
+	GtkWidget *m_info_label;
 	set<string>            m_supported_extensions;
 	list<string>           m_file_list;
 	list<string>::iterator m_file_list_itr;
@@ -83,10 +84,12 @@ private:
 	bool show_check_common(void);
 	void show_prev(void);
 	void show_next(void);
-	void show_info(void);
+	void create_and_show_info_label(void);
+	void toggle_info(void);
 	bool is_supported_picture(const string &file_name);
 	void add_picture_of_curr_dir(GFileInfo *file_info);
 	string make_info_string(void);
+	void update_info_label(void);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);
 	static void file_enum_ready_cb(GObject *source_object,

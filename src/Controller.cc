@@ -30,6 +30,7 @@ Controller::Controller(void)
 : m_widget(NULL),
   m_curr_dir(NULL),
   m_curr_picture_info(NULL),
+  m_info_label(NULL),
   m_file_list_cancellable(NULL)
 {
 	m_supported_extensions.insert("jpg");
@@ -76,6 +77,8 @@ void Controller::set_path(const string &path)
 	// set current directory
 	m_curr_picture_info = picture_info;
 	set_current_directory(path);
+
+	update_info_label();
 }
 
 // ----------------------------------------------------------------------------
@@ -407,7 +410,7 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 	else if (keyval == GDK_KEY_BackSpace || keyval == GDK_KEY_k)
 		obj->show_prev();
 	else if (keyval == GDK_KEY_i)
-		obj->show_info();
+		obj->toggle_info();
 	return TRUE;
 }
 
@@ -464,13 +467,24 @@ void Controller::show_next(void)
 	set_path(*m_file_list_itr);
 }
 
-void Controller::show_info(void)
+void Controller::create_and_show_info_label(void)
 {
-	GtkWidget *label = gtk_label_new(make_info_string().c_str());
-	gtk_widget_set_halign(label, GTK_ALIGN_START);
-	gtk_widget_set_valign(label, GTK_ALIGN_START);
-	gtk_overlay_add_overlay(GTK_OVERLAY(m_widget), label);
-	gtk_widget_show_all(label);
+	m_info_label = gtk_label_new(make_info_string().c_str());
+	gtk_widget_set_halign(m_info_label, GTK_ALIGN_START);
+	gtk_widget_set_valign(m_info_label, GTK_ALIGN_START);
+	gtk_overlay_add_overlay(GTK_OVERLAY(m_widget), m_info_label);
+	gtk_widget_show_all(m_info_label);
+}
+
+void Controller::toggle_info(void)
+{
+	if (!m_info_label) {
+		create_and_show_info_label();
+		return;
+	}
+	
+	gtk_container_remove(GTK_CONTAINER(m_widget), m_info_label);
+	m_info_label = NULL;
 }
 
 bool Controller::is_supported_picture(const string &file_name)
@@ -520,6 +534,13 @@ string Controller::make_info_string(void)
 	info += format("exposure: %s",
 	               m_curr_picture_info->get_exposure_string().c_str());
 	return info;
+}
+
+void Controller::update_info_label(void)
+{
+	if (!m_info_label)
+		return;
+	gtk_label_set_text(GTK_LABEL(m_info_label), make_info_string().c_str());
 }
 
 void Controller::file_enum_ready_cb(GObject *source_object,
