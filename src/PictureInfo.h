@@ -64,6 +64,8 @@ struct PictureInfo {
 	// methods
 	PictureInfo(void);
 	virtual ~PictureInfo();
+
+	string get_exposure_string(void);
 };
 
 typedef map<string, PictureInfo *> PictureInfoMap;

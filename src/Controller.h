@@ -86,12 +86,14 @@ private:
 	void show_info(void);
 	bool is_supported_picture(const string &file_name);
 	void add_picture_of_curr_dir(GFileInfo *file_info);
+	string make_info_string(void);
 	static gboolean _key_press_event(GtkWidget *widget, GdkEvent *event,
 	                                 gpointer user_data);
 	static void file_enum_ready_cb(GObject *source_object,
 	                               GAsyncResult *res, gpointer user_data);
 	static void file_enum_next_cb(GObject *source_object,
 	                              GAsyncResult *res, gpointer user_data);
+
 };
 
 #endif // Controller_h

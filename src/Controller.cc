@@ -21,6 +21,8 @@
 #include "Controller.h"
 #include "Utils.h"
 
+using namespace Utils;
+
 // ----------------------------------------------------------------------------
 // Public methods
 // ----------------------------------------------------------------------------
@@ -464,8 +466,7 @@ void Controller::show_next(void)
 
 void Controller::show_info(void)
 {
-	g_message("SHOW_INFO ***********\n");
-	GtkWidget *label = gtk_label_new ("LABBBBBEL\nFOOOOO\nAAABB***");
+	GtkWidget *label = gtk_label_new(make_info_string().c_str());
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
 	gtk_widget_set_valign(label, GTK_ALIGN_START);
 	gtk_overlay_add_overlay(GTK_OVERLAY(m_widget), label);
@@ -508,6 +509,17 @@ void Controller::add_picture_of_curr_dir(GFileInfo *file_info)
 			m_file_list_itr--;
 		}
 	}
+}
+
+string Controller::make_info_string(void)
+{
+	if (!m_curr_picture_info)
+		return "";
+
+	string info;
+	info += format("exposure: %s",
+	               m_curr_picture_info->get_exposure_string().c_str());
+	return info;
 }
 
 void Controller::file_enum_ready_cb(GObject *source_object,

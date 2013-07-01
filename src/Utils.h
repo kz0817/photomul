@@ -26,6 +26,7 @@ using namespace std;
 namespace Utils
 {
 	string get_path(GFile *gfile);
+	string format(const char *fmt, ...);
 } // namespace Utils
 
 #endif // Utils_h

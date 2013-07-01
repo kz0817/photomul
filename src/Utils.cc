@@ -27,4 +27,15 @@ string get_path(GFile *gfile)
 	return path;
 }
 
+string format(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	gchar *dup = g_strdup_vprintf(fmt, ap);
+	va_end(ap);
+	string str = dup;
+	g_free(dup);
+	return str;
+}
+
 } // namespace Utils

@@ -16,6 +16,9 @@
 */
 
 #include "PictureInfo.h"
+#include "Utils.h"
+
+using namespace Utils;
 
 PictureInfo::PictureInfo(void)
 : gfile(NULL),
@@ -39,5 +42,16 @@ PictureInfo::~PictureInfo()
 		g_object_unref(gfile);
 	if (pixbuf)
 		g_object_unref(pixbuf);
+}
+
+string PictureInfo::get_exposure_string(void)
+{
+	if (exposure_numerator < 0 || exposure_denominator <= 0)
+		return "N/A";
+
+	double exposure = (double)exposure_numerator / exposure_denominator;
+	if (exposure >= 1)
+		return format("%d", (int)exposure); 
+	return format("1/%d", (int)(1.0/exposure)); 
 }
 
