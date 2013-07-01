@@ -23,6 +23,26 @@
 
 using namespace Utils;
 
+struct InfoLabelData {
+	int         index;
+	const char *item_name;
+};
+
+enum {
+	INFO_TBL_EXPOSURE,
+};
+
+
+static InfoLabelData info_label_data[] = {
+{
+	INFO_TBL_EXPOSURE,
+	"Exposure",
+},
+};
+
+static const int NUM_INFO_TBL_ROWS
+  = sizeof(info_label_data) / sizeof(struct InfoLabelData);
+
 // ----------------------------------------------------------------------------
 // Public methods
 // ----------------------------------------------------------------------------
@@ -30,7 +50,7 @@ Controller::Controller(void)
 : m_widget(NULL),
   m_curr_dir(NULL),
   m_curr_picture_info(NULL),
-  m_info_label(NULL),
+  m_info_table(NULL),
   m_file_list_cancellable(NULL)
 {
 	m_supported_extensions.insert("jpg");
@@ -78,7 +98,7 @@ void Controller::set_path(const string &path)
 	m_curr_picture_info = picture_info;
 	set_current_directory(path);
 
-	update_info_label();
+	update_info_table();
 }
 
 // ----------------------------------------------------------------------------
@@ -467,24 +487,32 @@ void Controller::show_next(void)
 	set_path(*m_file_list_itr);
 }
 
-void Controller::create_and_show_info_label(void)
+void Controller::create_and_show_info_table(void)
 {
-	m_info_label = gtk_label_new(make_info_string().c_str());
-	gtk_widget_set_halign(m_info_label, GTK_ALIGN_START);
-	gtk_widget_set_valign(m_info_label, GTK_ALIGN_START);
-	gtk_overlay_add_overlay(GTK_OVERLAY(m_widget), m_info_label);
-	gtk_widget_show_all(m_info_label);
+	m_info_table = gtk_grid_new();
+	for (int i = 0; i < NUM_INFO_TBL_ROWS; i++) {
+		InfoLabelData *label_data = &info_label_data[i];
+		GtkWidget *label = gtk_label_new(label_data->item_name);
+		gtk_grid_attach(GTK_GRID(m_info_table), label, 0, i, 1, 1);
+		GtkWidget *value = gtk_label_new("");
+		gtk_grid_attach(GTK_GRID(m_info_table), value, 1, i, 1, 1);
+	}
+	update_info_table();
+	gtk_widget_set_halign(m_info_table, GTK_ALIGN_START);
+	gtk_widget_set_valign(m_info_table, GTK_ALIGN_START);
+	gtk_overlay_add_overlay(GTK_OVERLAY(m_widget), m_info_table);
+	gtk_widget_show_all(m_info_table);
 }
 
 void Controller::toggle_info(void)
 {
-	if (!m_info_label) {
-		create_and_show_info_label();
+	if (!m_info_table) {
+		create_and_show_info_table();
 		return;
 	}
 	
-	gtk_container_remove(GTK_CONTAINER(m_widget), m_info_label);
-	m_info_label = NULL;
+	gtk_container_remove(GTK_CONTAINER(m_widget), m_info_table);
+	m_info_table = NULL;
 }
 
 bool Controller::is_supported_picture(const string &file_name)
@@ -525,22 +553,19 @@ void Controller::add_picture_of_curr_dir(GFileInfo *file_info)
 	}
 }
 
-string Controller::make_info_string(void)
+void Controller::update_info_table(void)
 {
-	if (!m_curr_picture_info)
-		return "";
-
-	string info;
-	info += format("exposure: %s",
-	               m_curr_picture_info->get_exposure_string().c_str());
-	return info;
-}
-
-void Controller::update_info_label(void)
-{
-	if (!m_info_label)
+	if (!m_info_table)
 		return;
-	gtk_label_set_text(GTK_LABEL(m_info_label), make_info_string().c_str());
+	GtkWidget *value_label;
+	string value_str;
+	
+	// exposure
+	InfoLabelData *label_data = &info_label_data[INFO_TBL_EXPOSURE];
+	value_label = gtk_grid_get_child_at(GTK_GRID(m_info_table),
+	                                    1, label_data->index);
+	value_str = m_curr_picture_info->get_exposure_string();
+	gtk_label_set_text(GTK_LABEL(value_label), value_str.c_str());
 }
 
 void Controller::file_enum_ready_cb(GObject *source_object,
