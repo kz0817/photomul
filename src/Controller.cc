@@ -39,6 +39,18 @@ static InfoLabelData info_label_data[] = {
 	"F Number",
 	&PictureInfo::get_fnumber_string,
 },
+{
+	"ISO speed",
+	&PictureInfo::get_iso_speed_string,
+},
+{
+	"Exposure bias",
+	&PictureInfo::get_exposure_bias_string,
+},
+{
+	"Focal length",
+	&PictureInfo::get_focal_length_string,
+},
 };
 
 static const int NUM_INFO_TBL_ROWS

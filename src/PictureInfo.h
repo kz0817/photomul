@@ -67,6 +67,9 @@ struct PictureInfo {
 
 	string get_exposure_string(void);
 	string get_fnumber_string(void);
+	string get_iso_speed_string(void);
+	string get_exposure_bias_string(void);
+	string get_focal_length_string(void);
 };
 
 typedef map<string, PictureInfo *> PictureInfoMap;

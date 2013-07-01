@@ -64,3 +64,31 @@ string PictureInfo::get_fnumber_string(void)
 	return format("%.1f", fnumber);
 }
 
+string PictureInfo::get_iso_speed_string(void)
+{
+	if (iso_speed < 0)
+		return "N/A";
+
+	return format("%d", iso_speed);
+}
+
+string PictureInfo::get_exposure_bias_string(void)
+{
+	if (exposure_bias_numerator < 0 || exposure_bias_denominator <= 0)
+		return "N/A";
+
+	double bias =
+	  (double)exposure_bias_numerator / exposure_bias_denominator;
+	return format("%.2f", bias);
+}
+
+string PictureInfo::get_focal_length_string(void)
+{
+	if (focal_length_numerator < 0 || focal_length_denominator <= 0)
+		return "N/A";
+
+	double focal_length =
+	  (double)focal_length_numerator / focal_length_denominator;
+	return format("%d", (int)focal_length);
+}
+
