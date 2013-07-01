@@ -23,20 +23,17 @@
 
 using namespace Utils;
 
+typedef string (PictureInfo::*ExifValueGetter)(void);
+
 struct InfoLabelData {
-	int         index;
-	const char *item_name;
+	const char     *item_name;
+	ExifValueGetter value_getter;
 };
-
-enum {
-	INFO_TBL_EXPOSURE,
-};
-
 
 static InfoLabelData info_label_data[] = {
 {
-	INFO_TBL_EXPOSURE,
 	"Exposure",
+	&PictureInfo::get_exposure_string,
 },
 };
 
@@ -560,12 +557,13 @@ void Controller::update_info_table(void)
 	GtkWidget *value_label;
 	string value_str;
 	
-	// exposure
-	InfoLabelData *label_data = &info_label_data[INFO_TBL_EXPOSURE];
-	value_label = gtk_grid_get_child_at(GTK_GRID(m_info_table),
-	                                    1, label_data->index);
-	value_str = m_curr_picture_info->get_exposure_string();
-	gtk_label_set_text(GTK_LABEL(value_label), value_str.c_str());
+	for (int i = 0; i < NUM_INFO_TBL_ROWS; i++) {
+		InfoLabelData *label_data = &info_label_data[i];
+		value_label = gtk_grid_get_child_at(GTK_GRID(m_info_table),
+		                                    1, i);
+		value_str = (m_curr_picture_info->*label_data->value_getter)();
+		gtk_label_set_text(GTK_LABEL(value_label), value_str.c_str());
+	}
 }
 
 void Controller::file_enum_ready_cb(GObject *source_object,
