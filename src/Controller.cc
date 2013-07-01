@@ -64,6 +64,7 @@ Controller::Controller(void)
   m_curr_dir(NULL),
   m_curr_picture_info(NULL),
   m_info_table(NULL),
+  m_fullscreen(false),
   m_file_list_cancellable(NULL)
 {
 	m_supported_extensions.insert("jpg");
@@ -444,6 +445,8 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		obj->show_prev();
 	else if (keyval == GDK_KEY_i)
 		obj->toggle_info();
+	else if (keyval == GDK_KEY_g)
+		obj->toggle_fullscreen();
 	return TRUE;
 }
 
@@ -526,6 +529,23 @@ void Controller::toggle_info(void)
 	
 	gtk_container_remove(GTK_CONTAINER(m_widget), m_info_table);
 	m_info_table = NULL;
+}
+
+void Controller::toggle_fullscreen(void)
+{
+	if (!m_widget)
+		return;
+
+	GtkWidget *window = gtk_widget_get_toplevel(m_widget);
+	if (!gtk_widget_is_toplevel(window)) {
+		g_warning("Failed to get the top level window.");
+		return;
+	}
+	if (!m_fullscreen)
+		gtk_window_fullscreen(GTK_WINDOW(window));
+	else
+		gtk_window_unfullscreen(GTK_WINDOW(window));
+	m_fullscreen = !m_fullscreen;
 }
 
 bool Controller::is_supported_picture(const string &file_name)

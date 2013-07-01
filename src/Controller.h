@@ -42,6 +42,7 @@ private:
 	GFile     *m_curr_dir;
 	PictureInfo *m_curr_picture_info;
 	GtkWidget *m_info_table;
+	bool       m_fullscreen;
 	set<string>            m_supported_extensions;
 	list<string>           m_file_list;
 	list<string>::iterator m_file_list_itr;
@@ -86,6 +87,7 @@ private:
 	void show_next(void);
 	void create_and_show_info_table(void);
 	void toggle_info(void);
+	void toggle_fullscreen(void);
 	bool is_supported_picture(const string &file_name);
 	void add_picture_of_curr_dir(GFileInfo *file_info);
 	void update_info_table(void);
