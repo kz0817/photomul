@@ -7,11 +7,11 @@ Keyboard assignment
 -------------------
 [Space] or j     : show the next picture  
 [Backspace] or k : show the previous picture  
+i                : show/hide picture information  
+f                : go/back full screen mode  
 
 (Below are to be implemented)  
 [ESC]       : exit from full screen mode  
-i           : show/hide picture information  
-f           : go full screen mode  
 DEL         : move the picture to trash box  
 1           : show dot-by-dot  
 
