@@ -51,7 +51,16 @@ string PictureInfo::get_exposure_string(void)
 
 	double exposure = (double)exposure_numerator / exposure_denominator;
 	if (exposure >= 1)
-		return format("%d", (int)exposure); 
-	return format("1/%d", (int)(1.0/exposure)); 
+		return format("%d", (int)exposure);
+	return format("1/%d", (int)(1.0/exposure));
+}
+
+string PictureInfo::get_fnumber_string(void)
+{
+	if (fnumber_numerator < 0 || fnumber_denominator <= 0)
+		return "N/A";
+
+	double fnumber = (double)fnumber_numerator / fnumber_denominator;
+	return format("%.1f", fnumber);
 }
 

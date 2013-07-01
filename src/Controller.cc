@@ -35,6 +35,10 @@ static InfoLabelData info_label_data[] = {
 	"Exposure",
 	&PictureInfo::get_exposure_string,
 },
+{
+	"F Number",
+	&PictureInfo::get_fnumber_string,
+},
 };
 
 static const int NUM_INFO_TBL_ROWS

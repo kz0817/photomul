@@ -66,6 +66,7 @@ struct PictureInfo {
 	virtual ~PictureInfo();
 
 	string get_exposure_string(void);
+	string get_fnumber_string(void);
 };
 
 typedef map<string, PictureInfo *> PictureInfoMap;
