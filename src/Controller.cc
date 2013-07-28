@@ -445,7 +445,7 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		obj->show_prev();
 	else if (keyval == GDK_KEY_i)
 		obj->toggle_info();
-	else if (keyval == GDK_KEY_g)
+	else if (keyval == GDK_KEY_f)
 		obj->toggle_fullscreen();
 	return TRUE;
 }
