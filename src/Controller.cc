@@ -447,6 +447,8 @@ gboolean Controller::_key_press_event(GtkWidget *widget, GdkEvent *event,
 		obj->toggle_info();
 	else if (keyval == GDK_KEY_f)
 		obj->toggle_fullscreen();
+	else if (keyval == GDK_KEY_q)
+		obj->quit();
 	return TRUE;
 }
 
@@ -546,6 +548,11 @@ void Controller::toggle_fullscreen(void)
 	else
 		gtk_window_unfullscreen(GTK_WINDOW(window));
 	m_fullscreen = !m_fullscreen;
+}
+
+void Controller::quit(void)
+{
+	gtk_main_quit();
 }
 
 bool Controller::is_supported_picture(const string &file_name)

@@ -88,6 +88,7 @@ private:
 	void create_and_show_info_table(void);
 	void toggle_info(void);
 	void toggle_fullscreen(void);
+	void quit(void);
 	bool is_supported_picture(const string &file_name);
 	void add_picture_of_curr_dir(GFileInfo *file_info);
 	void update_info_table(void);
